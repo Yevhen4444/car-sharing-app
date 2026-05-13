@@ -1,6 +1,9 @@
 package com.example.carsharingapp.service.impl;
 
+import com.example.carsharingapp.dto.CarResponseDto;
+import com.example.carsharingapp.dto.CreateCarRequestDto;
 import com.example.carsharingapp.exception.EntityNotFoundException;
+import com.example.carsharingapp.mapper.CarMapper;
 import com.example.carsharingapp.model.Car;
 import com.example.carsharingapp.repository.CarRepository;
 import com.example.carsharingapp.util.TestDataHelper;
@@ -11,6 +14,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
@@ -18,64 +26,105 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class CarServiceImplTest {
-
+class CarServiceImplTest {
     @InjectMocks
     private CarServiceImpl carService;
 
     @Mock
     private CarRepository carRepository;
 
-   @Test
-   void createShouldSaveAndReturnCar() {
-       Car car = TestDataHelper.createCar();
-       when(carRepository.save(car)).thenReturn(car);
-       Car result = carService.create(car);
-       assertEquals(car, result);
-       verify(carRepository, times(1)).save(car);
-   }
+    @Mock
+    private CarMapper carMapper;
 
-   @Test
+    @Test
+    void createShouldSaveAndReturnCar() {
+        CreateCarRequestDto requestDto = TestDataHelper.createCarRequestDto();
+        Car car = TestDataHelper.createCar();
+        CarResponseDto responseDto = TestDataHelper.createCarResponseDto();
+
+        when(carMapper.toEntity(requestDto)).thenReturn(car);
+        when(carRepository.save(car)).thenReturn(car);
+        when(carMapper.toDto(car)).thenReturn(responseDto);
+
+        CarResponseDto result = carService.create(requestDto);
+
+        assertEquals(responseDto, result);
+        verify(carMapper, times(1)).toEntity(requestDto);
+        verify(carRepository, times(1)).save(car);
+        verify(carMapper, times(1)).toDto(car);
+    }
+
+    @Test
     void getAllShouldReturnAllCars() {
-       Car firstCar = TestDataHelper.createCar();
-       Car secondCar = TestDataHelper.createCar();
-       List<Car> cars = List.of(firstCar, secondCar);
-       when(carRepository.findAll()).thenReturn(cars);
-       List<Car> result = carService.getAll();
-       assertEquals(2, result.size());
-       verify(carRepository, times(1)).findAll();
-   }
+        Car firstCar = TestDataHelper.createCar();
+        Car secondCar = TestDataHelper.createCar();
+        CarResponseDto firstDto = TestDataHelper.createCarResponseDto();
+        CarResponseDto secondDto = TestDataHelper.createCarResponseDto();
 
-   @Test
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Car> cars = new PageImpl<>(List.of(firstCar, secondCar), pageable, 2);
+
+        when(carRepository.findAll(pageable)).thenReturn(cars);
+        when(carMapper.toDto(firstCar)).thenReturn(firstDto);
+        when(carMapper.toDto(secondCar)).thenReturn(secondDto);
+
+        Page<CarResponseDto> result = carService.getAll(pageable);
+
+        assertEquals(2, result.getContent().size());
+        verify(carRepository, times(1)).findAll(pageable);
+    }
+
+    @Test
     void getByIdShouldReturnCarWhenCarExists() {
-       Car car = TestDataHelper.createCar();
-       when(carRepository.findById(car.getId())).thenReturn(Optional.of(car));
-       Car result = carService.getById(car.getId());
-       assertEquals(car, result);
-       verify(carRepository, times(1)).findById(car.getId());
-   }
+        Car car = TestDataHelper.createCar();
+        CarResponseDto responseDto = TestDataHelper.createCarResponseDto();
 
-   @Test
+        when(carRepository.findById(car.getId())).thenReturn(Optional.of(car));
+        when(carMapper.toDto(car)).thenReturn(responseDto);
+
+        CarResponseDto result = carService.getById(car.getId());
+
+        assertEquals(responseDto, result);
+        verify(carRepository, times(1)).findById(car.getId());
+        verify(carMapper, times(1)).toDto(car);
+    }
+
+    @Test
     void getByIdShouldThrowEntityNotFoundExceptionWhenCarDoesNotExist() {
-       Long id = 1L;
-       when(carRepository.findById(id)).thenReturn(Optional.empty());
-       assertThrows(EntityNotFoundException.class, () -> carService.getById(id));
-       verify(carRepository, times(1)).findById(id);
-   }
+        Long id = 1L;
 
-   @Test
-    void updateShouldSaveAndReturnCar() {
-       Car car = TestDataHelper.createCar();
-       when(carRepository.save(car)).thenReturn(car);
-       Car result = carService.update(car);
-       assertEquals(car, result);
-       verify(carRepository, times(1)).save(car);
-   }
+        when(carRepository.findById(id)).thenReturn(Optional.empty());
 
-   @Test
+        assertThrows(EntityNotFoundException.class, () -> carService.getById(id));
+        verify(carRepository, times(1)).findById(id);
+    }
+
+    @Test
+    void updateShouldUpdateAndReturnCar() {
+        Long id = 1L;
+        CreateCarRequestDto requestDto = TestDataHelper.createCarRequestDto();
+        Car car = TestDataHelper.createCar();
+        CarResponseDto responseDto = TestDataHelper.createCarResponseDto();
+
+        when(carRepository.findById(id)).thenReturn(Optional.of(car));
+        when(carRepository.save(car)).thenReturn(car);
+        when(carMapper.toDto(car)).thenReturn(responseDto);
+
+        CarResponseDto result = carService.update(id, requestDto);
+
+        assertEquals(responseDto, result);
+        verify(carRepository, times(1)).findById(id);
+        verify(carMapper, times(1)).updateCarFromDto(requestDto, car);
+        verify(carRepository, times(1)).save(car);
+        verify(carMapper, times(1)).toDto(car);
+    }
+
+    @Test
     void deleteByIdShouldCallRepositoryDeleteById() {
-       Car car = TestDataHelper.createCar();
-       carService.deleteById(car.getId());
-       verify(carRepository, times(1)).deleteById(car.getId());
-   }
+        Car car = TestDataHelper.createCar();
+
+        carService.deleteById(car.getId());
+
+        verify(carRepository, times(1)).deleteById(car.getId());
+    }
 }

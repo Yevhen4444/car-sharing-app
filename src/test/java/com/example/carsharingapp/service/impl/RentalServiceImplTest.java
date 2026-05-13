@@ -20,6 +20,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -62,7 +66,7 @@ public class RentalServiceImplTest {
         when(rentalRepository.findByUserIdAndActualReturnDateIsNull(user.getId()))
                 .thenReturn(Optional.of(activeRental));
         assertThrows(BadRequestException.class,
-                () -> rentalService.createRental(dto));
+                () -> rentalService.create(dto));
         verify(rentalRepository, times(1))
                 .findByUserIdAndActualReturnDateIsNull(user.getId());
     }
@@ -81,7 +85,7 @@ public class RentalServiceImplTest {
         when(carRepository.findById(dto.getCarId()))
                 .thenReturn(Optional.empty());
         assertThrows(EntityNotFoundException.class,
-                () -> rentalService.createRental(dto));
+                () -> rentalService.create(dto));
         verify(rentalRepository, times(1))
                 .findByUserIdAndActualReturnDateIsNull(user.getId());
         verify(carRepository, times(1)).findById(dto.getCarId());
@@ -102,7 +106,7 @@ public class RentalServiceImplTest {
         when(carRepository.findById(dto.getCarId()))
                 .thenReturn(Optional.of(car));
         assertThrows(BadRequestException.class,
-                () -> rentalService.createRental(dto));
+                () -> rentalService.create(dto));
         verify(rentalRepository, times(1))
                 .findByUserIdAndActualReturnDateIsNull(user.getId());
         verify(carRepository, times(1))
@@ -135,7 +139,7 @@ public class RentalServiceImplTest {
                 .thenReturn(savedRental);
         when(rentalMapper.toDto(savedRental))
                 .thenReturn(rentalResponseDto);
-        RentalResponseDto actual = rentalService.createRental(dto);
+        RentalResponseDto actual = rentalService.create(dto);
         assertEquals(rentalResponseDto, actual);
         assertEquals(4, car.getInventory());
         verify(carRepository, times(1)).save(car);
@@ -211,20 +215,28 @@ public class RentalServiceImplTest {
     void getRentalsShouldReturnActiveRentals() {
         Long userId = 1L;
         Boolean isActive = true;
+        Pageable pageable = PageRequest.of(0, 10);
 
         Rental rental = TestDataHelper.createRental(
                 TestDataHelper.createUser(),
                 TestDataHelper.createCar());
         RentalResponseDto responseDto = TestDataHelper.createRentalResponseDto();
-        when(rentalRepository.findAllByUserIdAndActualReturnDateIsNull(userId))
-                .thenReturn(List.of(rental));
+
+        Page<Rental> rentals = new PageImpl<>(List.of(rental), pageable, 1);
+
+        when(rentalRepository.findAllByUserIdAndActualReturnDateIsNull(userId, pageable))
+                .thenReturn(rentals);
         when(rentalMapper.toDto(rental))
                 .thenReturn(responseDto);
-        List<RentalResponseDto> actual =
-                rentalService.getRentals(userId, isActive);
-        assertEquals(List.of(responseDto), actual);
+
+        Page<RentalResponseDto> actual =
+                rentalService.getAll(userId, isActive, pageable);
+
+        assertEquals(1, actual.getContent().size());
+        assertEquals(responseDto, actual.getContent().get(0));
+
         verify(rentalRepository, times(1))
-                .findAllByUserIdAndActualReturnDateIsNull(userId);
+                .findAllByUserIdAndActualReturnDateIsNull(userId, pageable);
         verify(rentalMapper, times(1))
                 .toDto(rental);
     }

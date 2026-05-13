@@ -6,6 +6,8 @@ import com.example.carsharingapp.service.PaymentService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,23 +24,23 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @GetMapping
-    public List<PaymentResponseDto> getPayments(@RequestParam(name = "user_id") Long userId) {
-        return paymentService.getPayments(userId);
+    public Page<PaymentResponseDto> getAll(@RequestParam(name = "user_id") Long userId, Pageable pageable) {
+        return paymentService.getAll(userId, pageable);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PaymentResponseDto createPayment(@Valid @RequestBody CreatePaymentRequestDto dto) {
-        return paymentService.createPayment(dto);
+    public PaymentResponseDto create(@Valid @RequestBody CreatePaymentRequestDto dto) {
+        return paymentService.create(dto);
     }
 
     @GetMapping("/success")
-    public PaymentResponseDto success(@RequestParam(name = "session_id") String sessionId) {
-        return paymentService.handleSuccessfulPayment(sessionId);
+    public PaymentResponseDto handleSuccess(@RequestParam(name = "session_id") String sessionId) {
+        return paymentService.handleSuccessful(sessionId);
     }
 
     @GetMapping("/cancel")
-    public String cancel() {
-        return paymentService.handleCancelledPayment();
+    public String handleCancel() {
+        return paymentService.handleCancelled();
     }
 }

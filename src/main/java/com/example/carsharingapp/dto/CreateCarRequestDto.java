@@ -5,6 +5,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import lombok.Data;
 
@@ -20,10 +21,10 @@ public class CreateCarRequestDto {
     @NotNull
     private CarType carType;
 
-    @Min(0)
+    @Positive
     private int inventory;
 
     @NotNull
-    @DecimalMin("0.0")
+    @Positive
     private BigDecimal dailyFee;
 }

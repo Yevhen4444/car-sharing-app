@@ -1,13 +1,14 @@
 package com.example.carsharingapp.repository;
 
 import com.example.carsharingapp.model.Payment;
-import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
-    List<Payment> findAllByRentalUserId(Long userId);
+    Page<Payment> findAllByRentalUserId(Long userId, Pageable pageable);
 
     Optional<Payment> findBySessionId(String sessionId);
 }

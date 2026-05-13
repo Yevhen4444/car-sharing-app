@@ -1,38 +1,48 @@
 package com.example.carsharingapp.service.impl;
 
+import com.example.carsharingapp.dto.CarResponseDto;
+import com.example.carsharingapp.dto.CreateCarRequestDto;
 import com.example.carsharingapp.exception.EntityNotFoundException;
+import com.example.carsharingapp.mapper.CarMapper;
 import com.example.carsharingapp.model.Car;
 import com.example.carsharingapp.repository.CarRepository;
 import com.example.carsharingapp.service.CarService;
-import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class CarServiceImpl implements CarService {
     private final CarRepository carRepository;
+    private final CarMapper carMapper;
 
     @Override
-    public Car create(Car car) {
-        return carRepository.save(car);
+    public CarResponseDto create(CreateCarRequestDto requestDto) {
+        Car car = carMapper.toEntity(requestDto);
+        return carMapper.toDto(carRepository.save(car));
     }
 
     @Override
-    public List<Car> getAll() {
-        return carRepository.findAll();
+    public Page<CarResponseDto> getAll(Pageable pageable) {
+        return carRepository.findAll(pageable)
+                .map(carMapper::toDto);
     }
 
     @Override
-    public Car getById(Long id) {
-        Optional<Car> carOptional = carRepository.findById(id);
-        return carOptional.orElseThrow(() -> new EntityNotFoundException("Can't find car by id: " + id));
+    public CarResponseDto getById(Long id) {
+        Car car = carRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Can't find car by id: " + id));
+        return carMapper.toDto(car);
     }
 
     @Override
-    public Car update(Car car) {
-        return carRepository.save(car);
+    public CarResponseDto update(Long id, CreateCarRequestDto requestDto) {
+        Car car = carRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Can't find car by id: " + id));
+        carMapper.updateCarFromDto(requestDto, car);
+        return carMapper.toDto(carRepository.save(car));
     }
 
     @Override

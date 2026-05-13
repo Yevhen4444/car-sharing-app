@@ -3,16 +3,18 @@ package com.example.carsharingapp.service;
 import com.example.carsharingapp.dto.CreatePaymentRequestDto;
 import com.example.carsharingapp.dto.PaymentResponseDto;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface PaymentService {
 
-    List<PaymentResponseDto> getPayments(Long userId);
+    Page<PaymentResponseDto> getAll(Long userId, Pageable pageable);
 
-    PaymentResponseDto createPayment(CreatePaymentRequestDto dto);
+    PaymentResponseDto create(CreatePaymentRequestDto dto);
 
-    PaymentResponseDto handleSuccessfulPayment(String sessionId);
+    PaymentResponseDto handleSuccessful(String sessionId);
 
-    String handleCancelledPayment();
+    String handleCancelled();
 
 
 }

@@ -6,6 +6,8 @@ import com.example.carsharingapp.service.RentalService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,10 +24,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class RentalController {
     private final RentalService rentalService;
 
-    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public RentalResponseDto create(@Valid @RequestBody CreateRentalRequestDto dto) {
-        return rentalService.createRental(dto);
+        return rentalService.create(dto);
     }
 
     @PostMapping("/{id}/return")
@@ -39,9 +41,10 @@ public class RentalController {
     }
 
     @GetMapping
-    public List<RentalResponseDto> getRentals(
+    public Page<RentalResponseDto> getAll(
             @RequestParam(name = "user_id") Long userId,
-            @RequestParam(name = "is_active", required = false) Boolean isActive) {
-        return rentalService.getRentals(userId, isActive);
+            @RequestParam(name = "is_active", required = false) Boolean isActive,
+            Pageable pageable) {
+        return rentalService.getAll(userId, isActive, pageable);
     }
 }

@@ -12,9 +12,10 @@ import com.example.carsharingapp.repository.CarRepository;
 import com.example.carsharingapp.repository.RentalRepository;
 import com.example.carsharingapp.service.NotificationService;
 import com.example.carsharingapp.service.RentalService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,7 @@ public class RentalServiceImpl implements RentalService {
 
     @Transactional
     @Override
-    public RentalResponseDto createRental(CreateRentalRequestDto dto) {
+    public RentalResponseDto create(CreateRentalRequestDto dto) {
         User user = (User) SecurityContextHolder.getContext()
                 .getAuthentication()
                 .getPrincipal();
@@ -88,19 +89,17 @@ public class RentalServiceImpl implements RentalService {
     }
 
     @Override
-    public List<RentalResponseDto> getRentals(Long userId, Boolean isActive) {
-        List<Rental> rentals;
+    public Page<RentalResponseDto> getAll(Long userId, Boolean isActive, Pageable  pageable) {
+        Page<Rental> rentals;
 
         if (isActive == null) {
-            rentals = rentalRepository.findAllByUserId(userId);
+            rentals = rentalRepository.findAllByUserId(userId, pageable);
         } else if (isActive) {
-            rentals = rentalRepository.findAllByUserIdAndActualReturnDateIsNull(userId);
+            rentals = rentalRepository.findAllByUserIdAndActualReturnDateIsNull(userId, pageable);
         } else {
-            rentals = rentalRepository.findAllByUserIdAndActualReturnDateIsNotNull(userId);
+            rentals = rentalRepository.findAllByUserIdAndActualReturnDateIsNotNull(userId, pageable);
         }
 
-        return rentals.stream()
-                .map(rentalMapper::toDto)
-                .toList();
+        return rentals.map(rentalMapper::toDto);
     }
 }

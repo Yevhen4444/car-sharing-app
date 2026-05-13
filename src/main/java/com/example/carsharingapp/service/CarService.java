@@ -1,16 +1,19 @@
 package com.example.carsharingapp.service;
 
-import com.example.carsharingapp.model.Car;
-import java.util.List;
+import com.example.carsharingapp.dto.CarResponseDto;
+import com.example.carsharingapp.dto.CreateCarRequestDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface CarService {
-    Car create(Car car);
 
-    List<Car> getAll();
+    CarResponseDto create(CreateCarRequestDto requestDto);
 
-    Car getById(Long id);
+    Page<CarResponseDto> getAll(Pageable pageable);
 
-    Car update(Car car);
+    CarResponseDto getById(Long id);
+
+    CarResponseDto update(Long id, CreateCarRequestDto requestDto);
 
     void deleteById(Long id);
 }

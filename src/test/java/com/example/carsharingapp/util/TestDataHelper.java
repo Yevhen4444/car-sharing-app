@@ -1,5 +1,7 @@
 package com.example.carsharingapp.util;
 
+import com.example.carsharingapp.dto.CarResponseDto;
+import com.example.carsharingapp.dto.CreateCarRequestDto;
 import com.example.carsharingapp.dto.CreateRentalRequestDto;
 import com.example.carsharingapp.dto.PaymentResponseDto;
 import com.example.carsharingapp.dto.RentalResponseDto;
@@ -140,6 +142,27 @@ public class TestDataHelper {
         dto.setRentalId(1L);
         dto.setSessionUrl("http://stripe-session");
         dto.setAmountToPay(BigDecimal.valueOf(100));
+        return dto;
+    }
+
+    public static CreateCarRequestDto createCarRequestDto() {
+        CreateCarRequestDto dto = new CreateCarRequestDto();
+        dto.setModel("Model S");
+        dto.setBrand("Tesla");
+        dto.setCarType(CarType.SEDAN);
+        dto.setInventory(5);
+        dto.setDailyFee(BigDecimal.valueOf(100));
+        return dto;
+    }
+
+    public static CarResponseDto createCarResponseDto() {
+        CarResponseDto dto = new CarResponseDto();
+        dto.setId(1L);
+        dto.setModel("Model S");
+        dto.setBrand("Tesla");
+        dto.setCarType(CarType.SEDAN);
+        dto.setInventory(5);
+        dto.setDailyFee(BigDecimal.valueOf(100));
         return dto;
     }
 }

@@ -52,9 +52,9 @@ public class UserServiceImplTest {
                 "test@mail.com",
                 "encoded-password");
         when(userRepository.findByEmail(dto.getEmail()))
-        .thenReturn(Optional.of(user));
+                .thenReturn(Optional.of(user));
         when(passwordEncoder.matches(dto.getPassword(), user.getPassword()))
-        .thenReturn(false);
+                .thenReturn(false);
         assertThrows(RegistrationException.class,
                 () -> userService.login(dto));
         verify(userRepository, times(1))
@@ -80,7 +80,7 @@ public class UserServiceImplTest {
         UserLoginResponseDto actual = userService.login(dto);
         assertEquals("test-token", actual.getToken());
         verify(userRepository, times(1))
-        .findByEmail(dto.getEmail());
+                .findByEmail(dto.getEmail());
         verify(passwordEncoder, times(1))
                 .matches(dto.getPassword(), user.getPassword());
         verify(jwtUtil, times(1))
@@ -116,7 +116,7 @@ public class UserServiceImplTest {
         when(userMapper.toEntity(dto))
                 .thenReturn(user);
         when(passwordEncoder.encode(dto.getPassword()))
-        .thenReturn("encoded-password");
+                .thenReturn("encoded-password");
         when(userRepository.save(user))
                 .thenReturn(savedUser);
         UserRegistrationResponseDto responseDto = TestDataHelper.createUserRegistrationResponseDto(
