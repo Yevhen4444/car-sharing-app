@@ -27,11 +27,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserRegistrationResponseDto register(UserRegistrationRequestDto dto) {
         if (!dto.getPassword().equals(dto.getRepeatPassword())) {
-            throw new RegistrationException("Passwords do not match");
+            throw new RegistrationException("Passwords do not match for email: " + dto.getEmail());
         }
         if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new RegistrationException("Email already exists");
-        }
+            throw new RegistrationException(
+                    "User already exists with email: " + dto.getEmail());        }
         User user = userMapper.toEntity(dto);
         user.setRole(Role.CUSTOMER);
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
@@ -42,12 +42,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserLoginResponseDto login(UserLoginRequestDto dto) {
         User user = userRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new EntityNotFoundException("Email not found"));
-
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "User not found with email: " + dto.getEmail()));
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
-            throw new RegistrationException("Invalid password");
+            throw new RegistrationException(
+                    "Invalid password for email: " + dto.getEmail());
         }
-
         UserLoginResponseDto responseDto = new UserLoginResponseDto();
         responseDto.setToken(jwtUtil.generateToken(user.getEmail()));
         return responseDto;

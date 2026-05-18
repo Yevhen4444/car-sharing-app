@@ -76,25 +76,62 @@ The system supports authentication, role-based access, and integrates with exter
 
 ---
 
-## 🗄 Database
+## 🗄 Database Structure
 
-Managed via **Liquibase**:
+The database schema is managed via **Liquibase**.
 
-Tables:
+### Entity Relationship Diagram
 
-* `users`
-* `cars`
-* `rentals`
-* `payments`
+```mermaid
+erDiagram
+    USERS ||--o{ RENTALS : has
+    CARS ||--o{ RENTALS : used_in
+    RENTALS ||--o{ PAYMENTS : has
 
----
+    USERS {
+        bigint id PK
+        varchar email UK
+        varchar first_name
+        varchar last_name
+        varchar password
+        varchar role
+    }
+
+    CARS {
+        bigint id PK
+        varchar model
+        varchar brand
+        varchar car_type
+        int inventory
+        decimal daily_fee
+    }
+
+    RENTALS {
+        bigint id PK
+        date rental_date
+        date return_date
+        date actual_return_date
+        bigint user_id FK
+        bigint car_id FK
+    }
+
+    PAYMENTS {
+        bigint id PK
+        varchar type
+        varchar status
+        bigint rental_id FK
+        varchar session_url
+        varchar session_id
+        decimal amount_to_pay
+    }
+```
 
 ## 🐳 Running with Docker
 
 ### 1. Clone project
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Yevhen4444/car-sharing-app
 cd car-sharing-app
 ```
 
@@ -117,11 +154,17 @@ TELEGRAM_CHAT_ID=your_chat_id
 
 ### 3. Run application
 
+Build and start all containers using Docker Compose:
+
 ```bash
 docker-compose up --build
 ```
 
----
+The application will be available at:
+
+```text
+http://localhost:8081
+```
 
 ## 🌐 API Documentation
 

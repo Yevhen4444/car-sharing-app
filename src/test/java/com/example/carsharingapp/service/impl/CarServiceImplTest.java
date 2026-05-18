@@ -18,7 +18,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
@@ -49,9 +48,9 @@ class CarServiceImplTest {
         CarResponseDto result = carService.create(requestDto);
 
         assertEquals(responseDto, result);
-        verify(carMapper, times(1)).toEntity(requestDto);
-        verify(carRepository, times(1)).save(car);
-        verify(carMapper, times(1)).toDto(car);
+        verify(carMapper).toEntity(requestDto);
+        verify(carRepository).save(car);
+        verify(carMapper).toDto(car);
     }
 
     @Test
@@ -71,7 +70,7 @@ class CarServiceImplTest {
         Page<CarResponseDto> result = carService.getAll(pageable);
 
         assertEquals(2, result.getContent().size());
-        verify(carRepository, times(1)).findAll(pageable);
+        verify(carRepository).findAll(pageable);
     }
 
     @Test
@@ -85,8 +84,8 @@ class CarServiceImplTest {
         CarResponseDto result = carService.getById(car.getId());
 
         assertEquals(responseDto, result);
-        verify(carRepository, times(1)).findById(car.getId());
-        verify(carMapper, times(1)).toDto(car);
+        verify(carRepository).findById(car.getId());
+        verify(carMapper).toDto(car);
     }
 
     @Test
@@ -96,7 +95,7 @@ class CarServiceImplTest {
         when(carRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> carService.getById(id));
-        verify(carRepository, times(1)).findById(id);
+        verify(carRepository).findById(id);
     }
 
     @Test
@@ -113,10 +112,10 @@ class CarServiceImplTest {
         CarResponseDto result = carService.update(id, requestDto);
 
         assertEquals(responseDto, result);
-        verify(carRepository, times(1)).findById(id);
-        verify(carMapper, times(1)).updateCarFromDto(requestDto, car);
-        verify(carRepository, times(1)).save(car);
-        verify(carMapper, times(1)).toDto(car);
+        verify(carRepository).findById(id);
+        verify(carMapper).updateCarFromDto(requestDto, car);
+        verify(carRepository).save(car);
+        verify(carMapper).toDto(car);
     }
 
     @Test
@@ -125,6 +124,6 @@ class CarServiceImplTest {
 
         carService.deleteById(car.getId());
 
-        verify(carRepository, times(1)).deleteById(car.getId());
+        verify(carRepository).deleteById(car.getId());
     }
 }

@@ -57,9 +57,9 @@ public class UserServiceImplTest {
                 .thenReturn(false);
         assertThrows(RegistrationException.class,
                 () -> userService.login(dto));
-        verify(userRepository, times(1))
+        verify(userRepository)
                 .findByEmail(dto.getEmail());
-        verify(passwordEncoder, times(1))
+        verify(passwordEncoder)
                 .matches(dto.getPassword(), user.getPassword());
     }
 
@@ -79,11 +79,11 @@ public class UserServiceImplTest {
                 .thenReturn("test-token");
         UserLoginResponseDto actual = userService.login(dto);
         assertEquals("test-token", actual.getToken());
-        verify(userRepository, times(1))
+        verify(userRepository)
                 .findByEmail(dto.getEmail());
-        verify(passwordEncoder, times(1))
+        verify(passwordEncoder)
                 .matches(dto.getPassword(), user.getPassword());
-        verify(jwtUtil, times(1))
+        verify(jwtUtil)
                 .generateToken(user.getEmail());
     }
 
@@ -130,15 +130,15 @@ public class UserServiceImplTest {
         assertEquals(responseDto, actual);
         assertEquals(Role.CUSTOMER, user.getRole());
         assertEquals("encoded-password", user.getPassword());
-        verify(userRepository, times(1))
+        verify(userRepository)
                 .existsByEmail(dto.getEmail());
-        verify(userMapper, times(1))
+        verify(userMapper)
                 .toEntity(dto);
-        verify(passwordEncoder, times(1))
+        verify(passwordEncoder)
                 .encode(dto.getPassword());
-        verify(userRepository, times(1))
+        verify(userRepository)
                 .save(user);
-        verify(userMapper, times(1))
+        verify(userMapper)
                 .toDto(savedUser);
     }
 }

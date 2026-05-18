@@ -91,10 +91,10 @@ class PaymentServiceImplTest {
         assertEquals(responseDto, actual);
         assertEquals(PaymentStatus.PAID, payment.getStatus());
 
-        verify(paymentRepository, times(1)).findBySessionId(sessionId);
-        verify(notificationService, times(1)).sendMessage(any());
-        verify(paymentRepository, times(1)).save(payment);
-        verify(paymentMapper, times(1)).toDto(savedPayment);
+        verify(paymentRepository).findBySessionId(sessionId);
+        verify(notificationService).sendMessage(any());
+        verify(paymentRepository).save(payment);
+        verify(paymentMapper).toDto(savedPayment);
     }
 
     @Test
@@ -117,8 +117,8 @@ class PaymentServiceImplTest {
         assertEquals(1, actual.getContent().size());
         assertEquals(responseDto, actual.getContent().get(0));
 
-        verify(paymentRepository, times(1)).findAllByRentalUserId(userId, pageable);
-        verify(paymentMapper, times(1)).toDto(payment);
+        verify(paymentRepository).findAllByRentalUserId(userId, pageable);
+        verify(paymentMapper).toDto(payment);
     }
 
     @Test
@@ -134,7 +134,7 @@ class PaymentServiceImplTest {
 
         assertTrue(actual.isEmpty());
 
-        verify(paymentRepository, times(1)).findAllByRentalUserId(userId, pageable);
+        verify(paymentRepository).findAllByRentalUserId(userId, pageable);
         verify(paymentMapper, times(0)).toDto(any());
     }
 }

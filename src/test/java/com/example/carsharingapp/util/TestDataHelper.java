@@ -14,6 +14,7 @@ import com.example.carsharingapp.model.Payment;
 import com.example.carsharingapp.model.PaymentStatus;
 import com.example.carsharingapp.model.PaymentType;
 import com.example.carsharingapp.model.Rental;
+import com.example.carsharingapp.model.Role;
 import com.example.carsharingapp.model.User;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -104,9 +105,14 @@ public class TestDataHelper {
         return dto;
     }
 
-    public static UserRegistrationRequestDto createUserRegistrationRequestDto(String email, String password, String repeatPassword) {
+    public static UserRegistrationRequestDto createUserRegistrationRequestDto(
+            String email,
+            String password,
+            String repeatPassword) {
         UserRegistrationRequestDto dto = new UserRegistrationRequestDto();
         dto.setEmail(email);
+        dto.setFirstName("Test");
+        dto.setLastName("User");
         dto.setPassword(password);
         dto.setRepeatPassword(repeatPassword);
         return dto;
@@ -114,7 +120,7 @@ public class TestDataHelper {
 
     public static UserRegistrationResponseDto createUserRegistrationResponseDto(Long id, String email, String firstName, String lastName) {
         UserRegistrationResponseDto dto = new UserRegistrationResponseDto();
-        dto.setId(1L);
+        dto.setId(id);
         dto.setEmail(email);
         dto.setFirstName(firstName);
         dto.setLastName(lastName);
@@ -164,5 +170,46 @@ public class TestDataHelper {
         dto.setInventory(5);
         dto.setDailyFee(BigDecimal.valueOf(100));
         return dto;
+    }
+
+    public static User createUserWithoutId() {
+        User user = new User();
+        user.setEmail("test@mail.com");
+        user.setFirstName("Test");
+        user.setLastName("User");
+        user.setPassword("password");
+        user.setRole(Role.CUSTOMER);
+        return user;
+    }
+
+    public static Car createCarWithoutId() {
+        Car car = new Car();
+        car.setModel("Model S");
+        car.setBrand("Tesla");
+        car.setCarType(CarType.SEDAN);
+        car.setInventory(5);
+        car.setDailyFee(BigDecimal.valueOf(100));
+        return car;
+    }
+
+    public static Rental createRentalWithoutId(User user, Car car) {
+        Rental rental = new Rental();
+        rental.setRentalDate(LocalDate.now());
+        rental.setReturnDate(LocalDate.now().plusDays(5));
+        rental.setActualReturnDate(null);
+        rental.setUser(user);
+        rental.setCar(car);
+        return rental;
+    }
+
+    public static Payment createPaymentWithoutId(Rental rental) {
+        Payment payment = new Payment();
+        payment.setStatus(PaymentStatus.PENDING);
+        payment.setType(PaymentType.PAYMENT);
+        payment.setAmountToPay(BigDecimal.valueOf(100));
+        payment.setSessionId("session-id");
+        payment.setSessionUrl("http://stripe-session");
+        payment.setRental(rental);
+        return payment;
     }
 }

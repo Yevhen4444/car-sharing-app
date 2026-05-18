@@ -10,52 +10,59 @@ import com.example.carsharingapp.model.Rental;
 import com.example.carsharingapp.model.User;
 import com.example.carsharingapp.repository.CarRepository;
 import com.example.carsharingapp.repository.RentalRepository;
+import com.example.carsharingapp.repository.UserRepository;
 import com.example.carsharingapp.service.NotificationService;
 import com.example.carsharingapp.service.RentalService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class RentalServiceImpl implements RentalService {
     private final RentalRepository rentalRepository;
     private final CarRepository carRepository;
+    private final UserRepository userRepository;
     private final RentalMapper rentalMapper;
     private final NotificationService notificationService;
 
     @Transactional
     @Override
     public RentalResponseDto create(CreateRentalRequestDto dto) {
-        User user = (User) SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getPrincipal();
+        User user = getAuthenticatedUser();
+
         if (rentalRepository.findByUserIdAndActualReturnDateIsNull(user.getId()).isPresent()) {
             throw new BadRequestException("User already has active rental");
         }
+
         Car car = carRepository.findById(dto.getCarId())
                 .orElseThrow(() -> new EntityNotFoundException("Car not found"));
+
         if (car.getInventory() <= 0) {
             throw new BadRequestException("Car is not available");
         }
+
         car.setInventory(car.getInventory() - 1);
+
         Rental rental = new Rental();
         rental.setRentalDate(LocalDate.now());
         rental.setReturnDate(dto.getReturnDate());
         rental.setActualReturnDate(null);
         rental.setUser(user);
         rental.setCar(car);
+
         carRepository.save(car);
         Rental savedRental = rentalRepository.save(rental);
+
         notificationService.sendMessage(
                 "New rental created. Rental id: " + savedRental.getId()
                         + ", user id: " + savedRental.getUser().getId()
-                        + ", car id: " + savedRental.getCar().getId()
-        );
+                        + ", car id: " + savedRental.getCar().getId());
+
         return rentalMapper.toDto(savedRental);
     }
 
@@ -64,14 +71,19 @@ public class RentalServiceImpl implements RentalService {
     public RentalResponseDto returnRental(Long rentalId) {
         Rental rental = rentalRepository.findById(rentalId)
                 .orElseThrow(() -> new EntityNotFoundException("Rental not found"));
+
         if (rental.getActualReturnDate() != null) {
             throw new BadRequestException("Rental already returned");
         }
+
         rental.setActualReturnDate(LocalDate.now());
+
         Car car = rental.getCar();
         car.setInventory(car.getInventory() + 1);
+
         carRepository.save(car);
         Rental savedRental = rentalRepository.save(rental);
+
         return rentalMapper.toDto(savedRental);
     }
 
@@ -79,17 +91,18 @@ public class RentalServiceImpl implements RentalService {
     public RentalResponseDto getById(Long rentalId) {
         Rental rental = rentalRepository.findById(rentalId)
                 .orElseThrow(() -> new EntityNotFoundException("Rental not found"));
-       User currentUser = (User) SecurityContextHolder.getContext()
-               .getAuthentication()
-               .getPrincipal();
+
+        User currentUser = getAuthenticatedUser();
+
         if (!rental.getUser().getId().equals(currentUser.getId())) {
             throw new EntityNotFoundException("You don't have access to this rental");
         }
+
         return rentalMapper.toDto(rental);
     }
 
     @Override
-    public Page<RentalResponseDto> getAll(Long userId, Boolean isActive, Pageable  pageable) {
+    public Page<RentalResponseDto> getAll(Long userId, Boolean isActive, Pageable pageable) {
         Page<Rental> rentals;
 
         if (isActive == null) {
@@ -101,5 +114,15 @@ public class RentalServiceImpl implements RentalService {
         }
 
         return rentals.map(rentalMapper::toDto);
+    }
+
+    private User getAuthenticatedUser() {
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "User not found by email: " + email));
     }
 }

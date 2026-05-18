@@ -3,6 +3,7 @@ package com.example.carsharingapp.controller;
 import com.example.carsharingapp.dto.CreateRentalRequestDto;
 import com.example.carsharingapp.dto.RentalResponseDto;
 import com.example.carsharingapp.service.RentalService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Rentals", description = "Endpoints for managing rentals")
 @RestController
 @RequestMapping("/rentals")
 @RequiredArgsConstructor
