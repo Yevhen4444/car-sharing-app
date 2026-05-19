@@ -5,13 +5,11 @@ import com.example.carsharingapp.model.Car;
 import com.example.carsharingapp.model.Rental;
 import com.example.carsharingapp.model.User;
 import com.example.carsharingapp.repository.CarRepository;
-import com.example.carsharingapp.repository.PaymentRepository;
 import com.example.carsharingapp.repository.RentalRepository;
 import com.example.carsharingapp.repository.UserRepository;
 import com.example.carsharingapp.service.NotificationService;
 import com.example.carsharingapp.util.TestDataHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -21,14 +19,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest
 @AutoConfigureMockMvc
 @WithMockUser(roles = "CUSTOMER")
+@Transactional
 class RentalControllerTest {
 
     @Autowired
@@ -49,24 +49,14 @@ class RentalControllerTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private PaymentRepository paymentRepository;
-
     @MockitoBean
     private NotificationService notificationService;
 
-    @BeforeEach
-    void setUp() {
-        paymentRepository.deleteAll();
-        rentalRepository.deleteAll();
-        carRepository.deleteAll();
-        userRepository.deleteAll();
-    }
-
     @Test
-    @WithMockUser(username = "test@mail.com", roles = "CUSTOMER")
+    @WithMockUser(username = "rental@mail.com", roles = "CUSTOMER")
     void getById_ValidId_ShouldReturnRental() throws Exception {
         User user = TestDataHelper.createUserWithoutId();
+        user.setEmail("rental@mail.com");
         user.setPassword(passwordEncoder.encode("password"));
         User savedUser = userRepository.save(user);
 
@@ -80,16 +70,13 @@ class RentalControllerTest {
 
         mockMvc.perform(get("/rentals/" + savedRental.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id")
-                        .value(savedRental.getId()))
-                .andExpect(jsonPath("$.carId")
-                        .value(savedCar.getId()))
-                .andExpect(jsonPath("$.userId")
-                        .value(savedUser.getId()));
+                .andExpect(jsonPath("$.id").value(savedRental.getId()))
+                .andExpect(jsonPath("$.carId").value(savedCar.getId()))
+                .andExpect(jsonPath("$.userId").value(savedUser.getId()));
     }
 
     @Test
-    @WithMockUser(username = "test@mail.com", roles = "CUSTOMER")
+    @WithMockUser(username = "login@mail.com", roles = "CUSTOMER")
     void create_ValidRequest_ShouldReturnCreated() throws Exception {
         User user = TestDataHelper.createUserWithoutId();
         user.setPassword(passwordEncoder.encode("password"));

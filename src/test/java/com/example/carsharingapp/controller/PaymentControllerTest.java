@@ -16,7 +16,6 @@ import com.example.carsharingapp.util.TestDataHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stripe.model.checkout.Session;
 import java.time.LocalDate;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -26,6 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -34,9 +34,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest
 @AutoConfigureMockMvc
 @WithMockUser(roles = "CUSTOMER")
+@Transactional
 class PaymentControllerTest {
 
     @Autowired
@@ -65,14 +66,6 @@ class PaymentControllerTest {
 
     @MockitoBean
     private NotificationService notificationService;
-
-    @BeforeEach
-    void setUp() {
-        paymentRepository.deleteAll();
-        rentalRepository.deleteAll();
-        carRepository.deleteAll();
-        userRepository.deleteAll();
-    }
 
     @Test
     void create_ValidRequest_ShouldReturnCreated() throws Exception {

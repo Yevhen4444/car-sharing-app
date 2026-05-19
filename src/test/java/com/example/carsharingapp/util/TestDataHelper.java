@@ -174,7 +174,7 @@ public class TestDataHelper {
 
     public static User createUserWithoutId() {
         User user = new User();
-        user.setEmail("test@mail.com");
+        user.setEmail("login@mail.com");
         user.setFirstName("Test");
         user.setLastName("User");
         user.setPassword("password");
