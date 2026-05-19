@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 @WithMockUser(roles = "CUSTOMER")
 @Transactional
 class RentalControllerTest {
@@ -53,10 +55,10 @@ class RentalControllerTest {
     private NotificationService notificationService;
 
     @Test
-    @WithMockUser(username = "rental@mail.com", roles = "CUSTOMER")
+    @WithMockUser(username = "login@mail.com", roles = "CUSTOMER")
     void getById_ValidId_ShouldReturnRental() throws Exception {
         User user = TestDataHelper.createUserWithoutId();
-        user.setEmail("rental@mail.com");
+        user.setEmail("login@mail.com");
         user.setPassword(passwordEncoder.encode("password"));
         User savedUser = userRepository.save(user);
 
