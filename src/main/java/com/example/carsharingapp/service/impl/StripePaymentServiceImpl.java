@@ -8,8 +8,10 @@ import com.stripe.param.checkout.SessionCreateParams;
 import java.math.BigDecimal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 public class StripePaymentServiceImpl implements StripePaymentService {
     @Value("${stripe.success-url}")
     private String successUrl;

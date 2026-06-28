@@ -122,8 +122,10 @@ class CarServiceImplTest {
     void deleteByIdShouldCallRepositoryDeleteById() {
         Car car = TestDataHelper.createCar();
 
+        when(carRepository.findById(car.getId())).thenReturn(Optional.of(car));
+
         carService.deleteById(car.getId());
 
-        verify(carRepository).deleteById(car.getId());
+        verify(carRepository).delete(car);
     }
 }

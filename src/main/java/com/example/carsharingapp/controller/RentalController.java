@@ -3,13 +3,14 @@ package com.example.carsharingapp.controller;
 import com.example.carsharingapp.dto.CreateRentalRequestDto;
 import com.example.carsharingapp.dto.RentalResponseDto;
 import com.example.carsharingapp.service.RentalService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,22 +27,30 @@ import org.springframework.web.bind.annotation.RestController;
 public class RentalController {
     private final RentalService rentalService;
 
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @Operation(summary = "Create a new rental")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public RentalResponseDto create(@Valid @RequestBody CreateRentalRequestDto dto) {
         return rentalService.create(dto);
     }
 
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @Operation(summary = "Return rental")
     @PostMapping("/{id}/return")
     public RentalResponseDto returnRental(@PathVariable Long id) {
         return rentalService.returnRental(id);
     }
 
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER')")
+    @Operation(summary = "Get rental by id")
     @GetMapping("/{id}")
     public RentalResponseDto getById(@PathVariable Long id) {
         return rentalService.getById(id);
     }
 
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'MANAGER')")
+    @Operation(summary = "Get all rentals")
     @GetMapping
     public Page<RentalResponseDto> getAll(
             @RequestParam(name = "user_id") Long userId,

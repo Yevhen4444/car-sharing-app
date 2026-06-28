@@ -18,6 +18,7 @@ import com.example.carsharingapp.model.Role;
 import com.example.carsharingapp.model.User;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
 public class TestDataHelper {
 
@@ -174,10 +175,10 @@ public class TestDataHelper {
 
     public static User createUserWithoutId() {
         User user = new User();
-        user.setEmail("login@mail.com");
-        user.setFirstName("Test");
-        user.setLastName("User");
-        user.setPassword("password");
+        user.setEmail(UUID.randomUUID() + "@mail.com");
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setPassword("1234");
         user.setRole(Role.CUSTOMER);
         return user;
     }
@@ -191,6 +192,7 @@ public class TestDataHelper {
         car.setDailyFee(BigDecimal.valueOf(100));
         return car;
     }
+
 
     public static Rental createRentalWithoutId(User user, Car car) {
         Rental rental = new Rental();

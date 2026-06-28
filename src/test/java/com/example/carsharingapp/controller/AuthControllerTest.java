@@ -1,5 +1,6 @@
 package com.example.carsharingapp.controller;
 
+import com.example.carsharingapp.config.MySqlTestContainer;
 import com.example.carsharingapp.dto.UserLoginRequestDto;
 import com.example.carsharingapp.dto.UserRegistrationRequestDto;
 import com.example.carsharingapp.model.User;
@@ -15,17 +16,20 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Testcontainers
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Transactional
-class AuthControllerTest {
+class AuthControllerTest extends MySqlTestContainer {
 
     @Autowired
     private MockMvc mockMvc;
@@ -80,5 +84,45 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").exists());
+    }
+
+    @Test
+    void login_InvalidPassword_ShouldReturnUnauthorized() throws Exception {
+        User user = TestDataHelper.createUserWithoutId();
+        user.setEmail("test@mail.com");
+        user.setPassword(passwordEncoder.encode("correct"));
+        userRepository.save(user);
+
+        UserLoginRequestDto dto =
+                TestDataHelper.createUserLoginRequestDto("test@mail.com", "wrong");
+
+        mockMvc.perform(post("/auth/login")
+                        .content(objectMapper.writeValueAsString(dto))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void register_DuplicateEmail_ShouldReturnBadRequest() throws Exception {
+        User user = TestDataHelper.createUserWithoutId();
+        user.setEmail("dup@mail.com");
+        user.setPassword(passwordEncoder.encode("123"));
+        userRepository.save(user);
+
+        UserRegistrationRequestDto dto =
+                TestDataHelper.createUserRegistrationRequestDto(
+                        "dup@mail.com", "password", "password");
+
+        mockMvc.perform(post("/auth/registration")
+                        .content(objectMapper.writeValueAsString(dto))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    @WithMockUser
+    void getById_InvalidId_ShouldReturnNotFound() throws Exception {
+        mockMvc.perform(get("/rentals/999999"))
+                .andExpect(status().isNotFound());
     }
 }

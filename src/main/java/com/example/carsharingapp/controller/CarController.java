@@ -3,12 +3,14 @@ package com.example.carsharingapp.controller;
 import com.example.carsharingapp.dto.CarResponseDto;
 import com.example.carsharingapp.dto.CreateCarRequestDto;
 import com.example.carsharingapp.service.CarService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,24 +28,32 @@ import org.springframework.web.bind.annotation.RestController;
 public class CarController {
     private final CarService carService;
 
+    @PreAuthorize("hasRole('MANAGER')")
+    @Operation(summary = "Create a new car")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CarResponseDto create(@Valid @RequestBody CreateCarRequestDto requestDto) {
         return carService.create(requestDto);
     }
 
+    @PreAuthorize ("hasAnyRole('CUSTOMER', 'MANAGER')")
+    @Operation(summary = "Get all cars")
     @GetMapping
     public Page<CarResponseDto> getAll(Pageable pageable) {
         return carService.getAll(pageable);
 
     }
 
+    @PreAuthorize ("hasAnyRole('CUSTOMER', 'MANAGER')")
+    @Operation(summary = "Get by id car")
     @GetMapping("/{id}")
     public CarResponseDto getById(@PathVariable long id) {
         return carService.getById(id);
 
     }
 
+    @PreAuthorize("hasRole('MANAGER')")
+    @Operation(summary = "Update car")
     @PutMapping("/{id}")
     public CarResponseDto update(@PathVariable Long id,
                                  @Valid @RequestBody CreateCarRequestDto requestDto) {
@@ -51,6 +61,8 @@ public class CarController {
 
     }
 
+    @PreAuthorize("hasRole('MANAGER')")
+    @Operation(summary = "Delete car")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {

@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class RentalServiceImpl implements RentalService {
     private final RentalRepository rentalRepository;
@@ -36,14 +37,14 @@ public class RentalServiceImpl implements RentalService {
         User user = getAuthenticatedUser();
 
         if (rentalRepository.findByUserIdAndActualReturnDateIsNull(user.getId()).isPresent()) {
-            throw new BadRequestException("User already has active rental");
+            throw new BadRequestException("User already has active rental " + user.getId());
         }
 
         Car car = carRepository.findById(dto.getCarId())
-                .orElseThrow(() -> new EntityNotFoundException("Car not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Car not found " + dto.getCarId()));
 
         if (car.getInventory() <= 0) {
-            throw new BadRequestException("Car is not available");
+            throw new BadRequestException("Car is not available " + dto.getCarId());
         }
 
         car.setInventory(car.getInventory() - 1);
@@ -70,10 +71,10 @@ public class RentalServiceImpl implements RentalService {
     @Override
     public RentalResponseDto returnRental(Long rentalId) {
         Rental rental = rentalRepository.findById(rentalId)
-                .orElseThrow(() -> new EntityNotFoundException("Rental not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Rental not found " + rentalId));
 
         if (rental.getActualReturnDate() != null) {
-            throw new BadRequestException("Rental already returned");
+            throw new BadRequestException("Rental already returned " + rentalId);
         }
 
         rental.setActualReturnDate(LocalDate.now());
@@ -90,12 +91,12 @@ public class RentalServiceImpl implements RentalService {
     @Override
     public RentalResponseDto getById(Long rentalId) {
         Rental rental = rentalRepository.findById(rentalId)
-                .orElseThrow(() -> new EntityNotFoundException("Rental not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Rental not found " + rentalId));
 
         User currentUser = getAuthenticatedUser();
 
         if (!rental.getUser().getId().equals(currentUser.getId())) {
-            throw new EntityNotFoundException("You don't have access to this rental");
+            throw new EntityNotFoundException("You don't have access to this rental " + rentalId);
         }
 
         return rentalMapper.toDto(rental);

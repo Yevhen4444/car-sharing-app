@@ -1,5 +1,6 @@
 package com.example.carsharingapp.controller;
 
+import com.example.carsharingapp.config.MySqlTestContainer;
 import com.example.carsharingapp.dto.CreatePaymentRequestDto;
 import com.example.carsharingapp.model.Car;
 import com.example.carsharingapp.model.Payment;
@@ -10,8 +11,8 @@ import com.example.carsharingapp.repository.CarRepository;
 import com.example.carsharingapp.repository.PaymentRepository;
 import com.example.carsharingapp.repository.RentalRepository;
 import com.example.carsharingapp.repository.UserRepository;
-import com.example.carsharingapp.service.NotificationService;
 import com.example.carsharingapp.service.StripePaymentService;
+import com.example.carsharingapp.service.impl.TelegramNotificationService;
 import com.example.carsharingapp.util.TestDataHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stripe.model.checkout.Session;
@@ -20,14 +21,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -39,8 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @WithMockUser(roles = "CUSTOMER")
-@Transactional
-class PaymentControllerTest {
+class PaymentControllerTest extends MySqlTestContainer {
 
     @Autowired
     private MockMvc mockMvc;
@@ -63,14 +63,19 @@ class PaymentControllerTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @MockitoBean
+    @MockBean
     private StripePaymentService stripePaymentService;
 
-    @MockitoBean
-    private NotificationService notificationService;
+    @MockBean
+    private TelegramNotificationService telegramNotificationService;
 
     @Test
     void create_ValidRequest_ShouldReturnCreated() throws Exception {
+        Session mockSession = mock(Session.class);
+        when(mockSession.getUrl()).thenReturn("http://stripe-session");
+        when(mockSession.getId()).thenReturn("test-session-id");
+        when(stripePaymentService.createSession(any())).thenReturn(mockSession);
+
         User user = TestDataHelper.createUserWithoutId();
         user.setPassword(passwordEncoder.encode("password123"));
         User savedUser = userRepository.save(user);
@@ -81,12 +86,6 @@ class PaymentControllerTest {
         Rental rental = TestDataHelper.createRentalWithoutId(savedUser, savedCar);
         rental.setActualReturnDate(LocalDate.now().plusDays(3));
         Rental savedRental = rentalRepository.save(rental);
-
-        Session session = new Session();
-        session.setId("session-id");
-        session.setUrl("http://stripe-session");
-
-        when(stripePaymentService.createSession(any())).thenReturn(session);
 
         CreatePaymentRequestDto requestDto = new CreatePaymentRequestDto();
         requestDto.setRentalId(savedRental.getId());
@@ -149,5 +148,35 @@ class PaymentControllerTest {
         mockMvc.perform(get("/payments/cancel"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Payment was cancelled. You can pay later."));
+    }
+
+    @Test
+    void handleSuccess_InvalidSession_ShouldReturnNotFound() throws Exception {
+        mockMvc.perform(get("/payments/success")
+                        .param("session_id", "wrong-id"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void createPayment_NotReturnedRental_ShouldReturnBadRequest() throws Exception {
+        User user = TestDataHelper.createUserWithoutId();
+        user.setPassword(passwordEncoder.encode("123"));
+        User savedUser = userRepository.save(user);
+
+        Car car = TestDataHelper.createCarWithoutId();
+        Car savedCar = carRepository.save(car);
+
+        Rental rental = TestDataHelper.createRentalWithoutId(savedUser, savedCar);
+        rental.setActualReturnDate(null);
+        rentalRepository.save(rental);
+
+        CreatePaymentRequestDto dto = new CreatePaymentRequestDto();
+        dto.setRentalId(rental.getId());
+        dto.setType(PaymentType.PAYMENT);
+
+        mockMvc.perform(post("/payments")
+                        .content(objectMapper.writeValueAsString(dto))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
     }
 }

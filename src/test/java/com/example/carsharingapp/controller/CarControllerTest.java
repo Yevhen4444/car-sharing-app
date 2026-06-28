@@ -1,5 +1,6 @@
 package com.example.carsharingapp.controller;
 
+import com.example.carsharingapp.config.MySqlTestContainer;
 import com.example.carsharingapp.dto.CreateCarRequestDto;
 import com.example.carsharingapp.model.Car;
 import com.example.carsharingapp.repository.CarRepository;
@@ -13,7 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.junit.jupiter.Testcontainers;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -22,12 +23,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Testcontainers
 @SpringBootTest
 @AutoConfigureMockMvc
 @WithMockUser(roles = "MANAGER")
 @ActiveProfiles("test")
-@Transactional
-class CarControllerTest {
+class CarControllerTest extends MySqlTestContainer {
 
     @Autowired
     private MockMvc mockMvc;
@@ -111,5 +112,29 @@ class CarControllerTest {
         boolean exists = carRepository.existsById(savedCar.getId());
 
         assertFalse(exists);
+    }
+
+    @Test
+    void getById_InvalidId_ShouldReturnNotFound() throws Exception {
+        mockMvc.perform(get("/cars/999999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser
+    void delete_InvalidId_ShouldReturnNotFound() throws Exception {
+        mockMvc.perform(delete("/cars/999999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void createCar_InvalidRequest_ShouldReturnBadRequest() throws Exception {
+        CreateCarRequestDto dto = new CreateCarRequestDto();
+        dto.setModel("");
+        dto.setBrand("");
+        mockMvc.perform(post("/cars")
+                        .content(objectMapper.writeValueAsString(dto))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
     }
 }
